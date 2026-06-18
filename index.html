@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prompt Starter Library</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --base:#0C0A14;
+    --surface:#1A1626;
+    --surface2:#221C33;
+    --accent:#8B5CF6;
+    --hook:#A78BFA;
+    --white:#F5F4FA;
+    --muted:#9A93AE;
+    --line:rgba(167,139,250,0.18);
+    --line2:rgba(167,139,250,0.30);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--base);
+    color:var(--white);
+    font-family:'Inter',sans-serif;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:80px;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+
+  /* sticky header */
+  .top{
+    position:sticky;top:0;z-index:30;
+    background:linear-gradient(180deg,var(--base) 70%,rgba(12,10,20,0.92));
+    backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line);
+    padding:20px 0 16px;
+  }
+  .topgrid{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap}
+  .brand .kicker{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;color:var(--muted);text-transform:uppercase}
+  .brand h1{font-family:'Anton',sans-serif;font-size:40px;line-height:0.95;letter-spacing:.5px;margin-top:4px}
+  .brand h1 span{color:var(--hook)}
+  .counts{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);text-align:right;line-height:1.7;white-space:nowrap}
+  .counts b{color:var(--hook);font-weight:500}
+
+  .searchrow{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+  .search{
+    flex:1;min-width:240px;display:flex;align-items:center;gap:10px;
+    background:var(--surface);border:1px solid var(--line2);border-radius:10px;
+    padding:11px 14px;
+  }
+  .search svg{flex:none;opacity:.6}
+  .search input{
+    flex:1;background:none;border:0;outline:0;color:var(--white);
+    font-family:'Inter',sans-serif;font-size:15px;
+  }
+  .search input::placeholder{color:var(--muted)}
+  .search kbd{
+    font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);
+    border:1px solid var(--line2);border-radius:5px;padding:2px 6px;
+  }
+  .clearbtn{
+    background:var(--surface);border:1px solid var(--line2);border-radius:10px;
+    color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:12px;
+    padding:0 14px;cursor:pointer;
+  }
+  .clearbtn:hover{color:var(--white);border-color:var(--accent)}
+
+  /* category filter */
+  .cats{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+  .cat{
+    font-family:'JetBrains Mono',monospace;font-size:12px;
+    background:var(--surface);border:1px solid var(--line);border-radius:20px;
+    color:var(--muted);padding:6px 13px;cursor:pointer;transition:.12s;
+    display:flex;align-items:center;gap:7px;
+  }
+  .cat:hover{color:var(--white);border-color:var(--line2)}
+  .cat.on{background:var(--accent);border-color:var(--accent);color:var(--base);font-weight:500}
+  .cat .n{opacity:.7;font-size:11px}
+  .cat.on .n{opacity:.85}
+
+  /* grid */
+  .grid{
+    margin-top:26px;
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));
+    gap:18px;align-items:start;
+  }
+  .card{
+    background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    padding:16px 16px 14px;display:flex;flex-direction:column;gap:11px;
+    transition:border-color .15s;
+  }
+  .card:hover{border-color:var(--line2)}
+  .card .head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+  .card h3{font-size:15px;font-weight:600;line-height:1.25;letter-spacing:.1px}
+  .tag{
+    flex:none;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.4px;
+    text-transform:uppercase;color:var(--hook);border:1px solid var(--line2);
+    border-radius:20px;padding:3px 9px;white-space:nowrap;
+  }
+  .desc{font-size:12.5px;color:var(--muted);line-height:1.5}
+  .body{
+    font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.65;
+    background:var(--base);border:1px solid var(--line);border-radius:10px;
+    padding:12px 13px;color:#D7D2E6;white-space:pre-wrap;word-break:break-word;
+    max-height:200px;overflow:auto;
+  }
+  .body .ph{color:var(--hook);background:rgba(139,92,246,0.14);border-radius:4px;padding:0 3px}
+
+  /* fill-in panel */
+  .fills{display:none;flex-direction:column;gap:8px;border-top:1px dashed var(--line);padding-top:11px}
+  .fills.open{display:flex}
+  .fillrow{display:flex;align-items:center;gap:9px}
+  .fillrow label{
+    font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--hook);
+    flex:none;min-width:96px;text-align:right;
+  }
+  .fillrow input{
+    flex:1;background:var(--base);border:1px solid var(--line2);border-radius:7px;
+    color:var(--white);font-family:'Inter',sans-serif;font-size:13px;padding:7px 9px;outline:0;
+  }
+  .fillrow input:focus{border-color:var(--accent)}
+
+  .actions{display:flex;gap:8px;margin-top:1px}
+  .btn{
+    font-family:'JetBrains Mono',monospace;font-size:12px;cursor:pointer;
+    border-radius:8px;padding:8px 12px;border:1px solid var(--line2);
+    background:var(--surface2);color:var(--white);transition:.12s;
+    display:flex;align-items:center;gap:7px;
+  }
+  .btn:hover{border-color:var(--accent)}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--base);font-weight:500}
+  .btn.primary:hover{background:var(--hook)}
+  .btn.ghost{background:none}
+  .btn.copied{background:#2E2547;border-color:var(--accent);color:var(--hook)}
+  .btn .ph-count{opacity:.7}
+
+  .empty{
+    grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--muted);
+    font-family:'JetBrains Mono',monospace;font-size:13px;
+  }
+  .empty b{color:var(--white);display:block;font-size:16px;margin-bottom:6px;font-family:'Inter',sans-serif}
+
+  /* how-to bar */
+  .howto{
+    margin-top:18px;background:var(--surface);border:1px solid var(--line);
+    border-radius:12px;padding:13px 16px;display:flex;gap:22px;flex-wrap:wrap;
+    font-size:12.5px;color:var(--muted);
+  }
+  .howto b{color:var(--hook);font-weight:500}
+  .howto .step{display:flex;align-items:center;gap:8px}
+  .howto .num{
+    font-family:'JetBrains Mono',monospace;font-size:11px;background:var(--accent);
+    color:var(--base);width:18px;height:18px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;flex:none;
+  }
+
+  footer{
+    max-width:1180px;margin:40px auto 0;padding:16px 20px 0;border-top:1px solid var(--line);
+    font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);
+    display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;
+  }
+
+  /* toast */
+  .toast{
+    position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--accent);color:var(--base);font-family:'JetBrains Mono',monospace;
+    font-size:13px;font-weight:500;padding:11px 18px;border-radius:10px;
+    opacity:0;pointer-events:none;transition:.22s;z-index:50;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  @media (max-width:560px){
+    .brand h1{font-size:32px}
+    .counts{text-align:left}
+    .fillrow{flex-direction:column;align-items:stretch;gap:4px}
+    .fillrow label{text-align:left;min-width:0}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto}}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="wrap">
+    <div class="topgrid">
+      <div class="brand">
+        <div class="kicker">AI personal brand · resource library</div>
+        <h1>PROMPT <span>STARTER</span> LIBRARY</h1>
+      </div>
+      <div class="counts">
+        <span id="totalCount">0</span> templates · <b id="catCount">0</b> categories<br>
+        showing <span id="shownCount">0</span>
+      </div>
+    </div>
+
+    <div class="searchrow">
+      <div class="search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A78BFA" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input id="search" type="text" placeholder="Search templates, keywords, use cases…" autocomplete="off">
+        <kbd>/</kbd>
+      </div>
+      <button class="clearbtn" id="clearBtn">reset</button>
+    </div>
+
+    <div class="cats" id="cats"></div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="howto">
+    <div class="step"><span class="num">1</span> Pick a template, click <b>Fill in</b> to replace the <b>[placeholders]</b>.</div>
+    <div class="step"><span class="num">2</span> Hit <b>Copy</b> — copies the filled version, or the raw template if left blank.</div>
+    <div class="step"><span class="num">3</span> Paste into any model. Edit freely; these are starting points, not scripts.</div>
+  </div>
+
+  <div class="grid" id="grid"></div>
+</div>
+
+<footer>
+  <span>AI personal brand · prompt starter library · v1</span>
+  <span>50+ templates · keep in batch folder</span>
+</footer>
+
+<div class="toast" id="toast">Copied to clipboard</div>
+
+<script>
+const TEMPLATES = [
+  // ---------- WRITING ----------
+  {cat:"Writing", title:"Long-form article draft", desc:"Turn a topic into a structured first draft.",
+   body:`You are a skilled writer for [audience]. Write a [word count]-word article on [topic].\nGoal: [what the reader should learn or do].\nTone: [tone]. Reading level: [level].\nStructure it with a hook, 3-5 sections with subheadings, and a short closing.\nAvoid filler and clichés. Use concrete examples where possible.`},
+  {cat:"Writing", title:"Rewrite in a target voice", desc:"Match an existing piece to a specific style.",
+   body:`Rewrite the text below in the voice of [reference: e.g. a direct technical practitioner].\nKeep the meaning and all facts intact. Change only tone, rhythm, and word choice.\nConstraints: [e.g. sentence case, no em dashes, conversational].\n\nText:\n[paste text]`},
+  {cat:"Writing", title:"Hook generator", desc:"Ten opening lines for any piece.",
+   body:`Write 10 distinct opening hooks for a piece about [topic], aimed at [audience].\nVary the angle: question, bold claim, stat, story, contrarian take, pattern interrupt.\nEach hook: one sentence, under 20 words, sentence case. No emojis.`},
+  {cat:"Writing", title:"Outline from a messy brain dump", desc:"Impose structure on raw notes.",
+   body:`Below is a raw brain dump on [topic]. Turn it into a clean, logical outline.\nGroup related ideas, remove duplicates, flag gaps where the argument is thin, and suggest an order.\nReturn as a nested bullet outline.\n\nNotes:\n[paste notes]`},
+  {cat:"Writing", title:"Story / case study", desc:"Narrative built around a result.",
+   body:`Write a [length] case study for [audience].\nSubject: [person/company]. Problem: [problem]. Action taken: [action]. Result: [measurable result].\nUse a problem → action → result arc. Keep it specific and grounded; no hype words.`},
+  {cat:"Writing", title:"Title / headline variations", desc:"Test angles before you commit.",
+   body:`Generate 15 headline options for [piece / topic] targeting [audience].\nMix styles: how-to, listicle, question, benefit-led, curiosity gap, contrarian.\nKeep each under 12 words, sentence case. Then mark your top 3 and say why in one line each.`},
+  {cat:"Writing", title:"Counterargument pass", desc:"Stress-test your own writing.",
+   body:`Read the argument below. Play a sharp, fair critic.\nList the 3 strongest objections a smart reader would raise, and for each, suggest how to address or preempt it.\n\nArgument:\n[paste text]`},
+  {cat:"Writing", title:"Tighten and cut", desc:"Same message, fewer words.",
+   body:`Cut the text below by [30%] without losing meaning or key facts.\nRemove redundancy, hedging, and filler. Keep the voice. Return only the tightened version.\n\nText:\n[paste text]`},
+
+  // ---------- RESEARCH ----------
+  {cat:"Research", title:"Topic primer", desc:"Get oriented on something new fast.",
+   body:`Give me a structured primer on [topic] for someone with [background level].\nCover: what it is, why it matters, key concepts and terms, common misconceptions, and where the debates are.\nEnd with 5 questions I should ask next to go deeper.`},
+  {cat:"Research", title:"Compare options matrix", desc:"Side-by-side decision support.",
+   body:`Compare [option A], [option B], and [option C] for the goal of [goal].\nReturn a matrix scoring each on: [criteria, e.g. cost, learning curve, ecosystem, scalability].\nThen state the trade-off of choosing each over the others. No single "best" — make the trade-offs explicit.`},
+  {cat:"Research", title:"Steelman both sides", desc:"Understand a debate properly.",
+   body:`Present the strongest honest case for and against [position].\nFor each side: core claim, best evidence, and the weakest point in their argument.\nStay neutral. Don't tell me which is right.`},
+  {cat:"Research", title:"Source / claim breakdown", desc:"Interrogate a piece of content.",
+   body:`Analyse the content below. Identify: main claims, the evidence given for each, any unsupported assertions, and what's missing.\nFlag where I should verify independently.\n\nContent:\n[paste text or URL summary]`},
+  {cat:"Research", title:"Literature-style synthesis", desc:"Pull threads across inputs.",
+   body:`I'll give you several notes/excerpts on [topic]. Synthesise them.\nIdentify points of agreement, points of conflict, and open questions. Note which source supports which claim.\n\nInputs:\n[paste excerpts]`},
+  {cat:"Research", title:"Define the unknowns", desc:"Map what you don't know yet.",
+   body:`I'm researching [topic] to decide [decision]. List the key unknowns I need to resolve before deciding.\nFor each unknown: why it matters, how I could find the answer, and a rough confidence I'd need.`},
+
+  // ---------- SUMMARISATION ----------
+  {cat:"Summarisation", title:"TL;DR + key points", desc:"Fast gist of anything.",
+   body:`Summarise the text below.\nReturn: a one-sentence TL;DR, then 5-7 key points as bullets, then any action items.\nKeep it factual; don't add interpretation.\n\nText:\n[paste text]`},
+  {cat:"Summarisation", title:"Summarise for a specific reader", desc:"Tailor the takeaways.",
+   body:`Summarise the content below for [reader, e.g. a busy executive / a beginner].\nFocus on what they specifically care about: [their concern].\nMatch their level of detail and skip what's irrelevant to them.\n\nContent:\n[paste text]`},
+  {cat:"Summarisation", title:"Meeting / call notes", desc:"Transcript to usable notes.",
+   body:`Turn this transcript into clean notes.\nReturn: decisions made, action items (with owner if named), open questions, and key context.\nIgnore small talk.\n\nTranscript:\n[paste transcript]`},
+  {cat:"Summarisation", title:"Multi-level summary", desc:"One line, one paragraph, one page.",
+   body:`Summarise the text below at three levels:\n1. One sentence.\n2. One paragraph.\n3. A one-page structured overview with headings.\nKeep facts consistent across all three.\n\nText:\n[paste text]`},
+  {cat:"Summarisation", title:"Extract structured data", desc:"Pull fields out of prose.",
+   body:`From the text below, extract [fields, e.g. names, dates, amounts, commitments].\nReturn as a clean table. If a field is missing, write "not stated". Don't infer.\n\nText:\n[paste text]`},
+  {cat:"Summarisation", title:"Summarise a thread / debate", desc:"Condense a back-and-forth.",
+   body:`Summarise the discussion below. Identify each participant's position, where they agree and disagree, and the current state (resolved / open).\nNeutral tone, no side-taking.\n\nDiscussion:\n[paste text]`},
+
+  // ---------- EMAIL & COMMS ----------
+  {cat:"Email & Comms", title:"Draft from bullet points", desc:"Notes to a finished email.",
+   body:`Write an email to [recipient] about [subject].\nKey points to cover: [bullets].\nGoal: [what I want them to do].\nTone: [tone]. Length: [short/medium]. Include a clear subject line and call to action.`},
+  {cat:"Email & Comms", title:"Reply for me", desc:"Respond in your voice.",
+   body:`Draft a reply to the email below.\nMy intent: [what I want to convey / decide].\nTone: [tone]. Keep it [length].\nMatch a [direct, friendly, professional] register.\n\nEmail:\n[paste email]`},
+  {cat:"Email & Comms", title:"Say no politely", desc:"Decline without burning the bridge.",
+   body:`Help me decline [request] from [person].\nReason (for my context, soften as needed): [reason].\nKeep it warm, brief, and firm. Offer [an alternative / nothing] if appropriate. No over-apologising.`},
+  {cat:"Email & Comms", title:"Follow-up nudge", desc:"Chase without nagging.",
+   body:`Write a follow-up to [recipient]. Previous message was about [topic], sent [timeframe] ago with no reply.\nGoal: get a response on [specific ask].\nTone: light, low-pressure, easy to reply to. Give them an easy out.`},
+  {cat:"Email & Comms", title:"Cold outreach", desc:"First-touch that doesn't get ignored.",
+   body:`Write a cold [email/DM] to [recipient/role] at [company].\nWhy them specifically: [reason]. What I offer: [value]. The ask: [one small ask].\nUnder 90 words. No flattery padding. Lead with relevance to them.`},
+  {cat:"Email & Comms", title:"Difficult message", desc:"Deliver bad news cleanly.",
+   body:`Help me deliver this difficult message to [recipient]: [situation].\nGive me 2 versions: one that softens the landing, one that rips the bandaid.\nFor each, note what it prioritises and the risk. Keep both honest and respectful.`},
+  {cat:"Email & Comms", title:"Make it shorter / clearer", desc:"Trim an email before sending.",
+   body:`Rewrite the email below to be clearer and [50%] shorter.\nKeep the ask obvious and the tone [tone]. Remove hedging and filler. Return the subject line too.\n\nEmail:\n[paste draft]`},
+
+  // ---------- ANALYSIS ----------
+  {cat:"Analysis", title:"SWOT-style breakdown", desc:"Structured look at a situation.",
+   body:`Analyse [subject: idea/business/decision].\nBreak it into strengths, weaknesses, opportunities, and threats.\nBe specific and honest — no generic entries. End with the single biggest risk and the single biggest lever.`},
+  {cat:"Analysis", title:"Root cause (5 Whys)", desc:"Get past the symptom.",
+   body:`Problem: [problem].\nWalk through a 5 Whys analysis to find the likely root cause(s).\nAt each step, state the assumption you're making. End with the most probable root cause and a test to confirm it.`},
+  {cat:"Analysis", title:"Pros / cons / unknowns", desc:"Weigh a decision.",
+   body:`I'm deciding whether to [decision].\nList pros, cons, and unknowns. Weight each pro/con by importance (high/med/low).\nDon't recommend yet — just lay out the landscape clearly.`},
+  {cat:"Analysis", title:"Interpret data / results", desc:"Make sense of numbers.",
+   body:`Here is [data/metrics]: [paste].\nWhat are the 3-5 most important takeaways? What's surprising? What could be misleading or need more context?\nFlag any conclusion the data does NOT support.`},
+  {cat:"Analysis", title:"Assumption audit", desc:"Surface hidden beliefs.",
+   body:`Below is my plan/argument. List every assumption it depends on, including the unstated ones.\nFor each, rate how confident I should be and what happens if it's wrong.\n\nPlan:\n[paste text]`},
+  {cat:"Analysis", title:"Pre-mortem", desc:"Imagine it already failed.",
+   body:`Assume [project/plan] launched and failed badly in [timeframe]. Write the post-mortem explaining why.\nList the most likely failure modes in order of probability, and one preventive action for each.`},
+
+  // ---------- CODING & TECHNICAL ----------
+  {cat:"Coding", title:"Explain this code", desc:"Understand an unfamiliar snippet.",
+   body:`Explain the code below to a [level] developer.\nCover: what it does, how it works step by step, any edge cases or bugs, and how I'd test it.\n\nCode:\n[paste code]`},
+  {cat:"Coding", title:"Debug helper", desc:"Find and fix the issue.",
+   body:`I'm getting this error: [error message].\nExpected: [behaviour]. Actual: [behaviour].\nHere's the relevant code: [paste].\nStack: [language/framework]. Give the likely cause, the fix, and how to prevent it.`},
+  {cat:"Coding", title:"Write a function spec-first", desc:"Get production-quality code.",
+   body:`Write a [language] function that [does what].\nInputs: [inputs]. Output: [output]. Constraints: [constraints].\nFavour readability and SOLID principles. Handle edge cases, add brief comments, and include 2-3 test cases.`},
+  {cat:"Coding", title:"Refactor for clarity", desc:"Improve without changing behaviour.",
+   body:`Refactor the code below. Keep behaviour identical.\nGoals: [readability / performance / smaller functions / fewer dependencies].\nExplain each change in one line. Flag anything risky.\n\nCode:\n[paste code]`},
+  {cat:"Coding", title:"Architecture trade-offs", desc:"Choose between approaches.",
+   body:`I need to [build/decide] [thing]. Compare [approach A], [approach B], [approach C].\nScore each on latency, maintainability, ecosystem, and cost as a matrix.\nState the trade-off of each over the others. No single "best" answer.`},
+  {cat:"Coding", title:"Regex / query builder", desc:"Generate and explain a pattern.",
+   body:`Write a [regex / SQL query / shell command] that [does what].\nInput looks like: [example]. Desired output: [example].\nExplain each part, and give one edge case where it might break.`},
+
+  // ---------- LEARNING & EXPLAINING ----------
+  {cat:"Learning", title:"Explain like I'm [level]", desc:"Right-sized explanation.",
+   body:`Explain [concept] as if I'm [a complete beginner / a smart 12-year-old / a pro in another field].\nUse one clear analogy, then the real definition, then one example.\nFlag the most common misunderstanding.`},
+  {cat:"Learning", title:"Teach with a worked example", desc:"Learn by watching it done.",
+   body:`Teach me [skill/concept] by walking through one complete worked example, step by step.\nExplain your reasoning at each step, not just the result. Then give me a similar problem to try on my own.`},
+  {cat:"Learning", title:"Quiz me", desc:"Active recall on a topic.",
+   body:`Quiz me on [topic] at [level]. Ask one question at a time and wait for my answer.\nAfter each, tell me if I'm right, correct any gaps, and adjust difficulty based on how I do.\nStart now.`},
+  {cat:"Learning", title:"Build a learning roadmap", desc:"A path from zero to capable.",
+   body:`I want to learn [skill] to the point I can [goal]. I have [time per week] and I'm currently [level].\nGive me a phased roadmap: what to learn in what order, why, and a small project for each phase.`},
+  {cat:"Learning", title:"Feynman check", desc:"Test whether you really get it.",
+   body:`I'll explain [concept] in my own words. Find the gaps, errors, and hand-waving in my explanation, then give me the cleaner version.\n\nMy explanation:\n[paste your explanation]`},
+  {cat:"Learning", title:"Translate jargon", desc:"Decode dense material.",
+   body:`Rewrite the passage below in plain language for [audience].\nKeep every fact, drop the jargon (or define it inline once). Don't oversimplify to the point of being wrong.\n\nPassage:\n[paste text]`},
+
+  // ---------- IDEATION ----------
+  {cat:"Ideation", title:"Idea volume", desc:"Quantity first, judge later.",
+   body:`Generate [20] distinct ideas for [goal/problem].\nPush past the obvious — include some safe, some weird, some contrarian.\nDon't filter or explain yet. Just the list.`},
+  {cat:"Ideation", title:"Idea + then pressure-test", desc:"Generate, then sort.",
+   body:`Brainstorm [10] ideas for [goal]. Then sort them into: quick wins, big bets, and probably-bad.\nFor the top 3, add one line on why it could work and the main risk.`},
+  {cat:"Ideation", title:"Combine and remix", desc:"Force novel combinations.",
+   body:`Take [concept A] and [concept B] and generate [8] ideas that combine them.\nFor each, one sentence on the idea and who it'd be for. Aim for combinations I wouldn't reach on my own.`},
+  {cat:"Ideation", title:"Content angles from one topic", desc:"Mine a topic for many posts.",
+   body:`I want to create content about [topic] for [platform/audience].\nGive me [15] distinct angles: contrarian takes, how-tos, myths, stories, lists, and questions.\nEach as a one-line title.`},
+  {cat:"Ideation", title:"Name generator", desc:"Options for a product/project.",
+   body:`Suggest [15] names for [thing], which is [description], aimed at [audience].\nMix styles: literal, evocative, invented, compound. Keep them short and easy to say.\nFlag any that might have obvious conflicts.`},
+
+  // ---------- EDITING & PROOFREADING ----------
+  {cat:"Editing", title:"Proofread only", desc:"Fix errors, keep my voice.",
+   body:`Proofread the text below for grammar, spelling, and punctuation only.\nDo NOT change my voice, structure, or word choices beyond fixing errors.\nReturn the corrected text, then a short list of what you changed.\n\nText:\n[paste text]`},
+  {cat:"Editing", title:"Line edit for flow", desc:"Smooth the prose.",
+   body:`Line-edit the text below for clarity, rhythm, and flow.\nKeep my meaning and tone. Cut filler, fix awkward sentences, vary length.\nShow the edited version. Keep changes conservative.\n\nText:\n[paste text]`},
+  {cat:"Editing", title:"Tone shift", desc:"Same content, new register.",
+   body:`Rewrite the text below to sound more [tone: e.g. confident / warm / formal / casual].\nKeep all facts and the core message. Change only tone and word choice.\n\nText:\n[paste text]`},
+  {cat:"Editing", title:"Fact / consistency check", desc:"Catch internal contradictions.",
+   body:`Review the text below for internal inconsistencies, contradictions, and claims that need a source.\nList each issue with the line it's on and a suggested fix. Don't rewrite the whole thing.\n\nText:\n[paste text]`},
+  {cat:"Editing", title:"Cut the AI tells", desc:"Make it read human.",
+   body:`Edit the text below to remove AI-writing tells: clichés, "it's not X it's Y" structures, em dashes, hedging, and generic transitions.\nKeep it direct and human. Return the cleaned version.\n\nText:\n[paste text]`},
+
+  // ---------- PLANNING & PRODUCTIVITY ----------
+  {cat:"Planning", title:"Break a goal into steps", desc:"Big goal to next actions.",
+   body:`My goal: [goal] by [deadline].\nBreak it into phases, then concrete next actions for the first phase.\nFlag dependencies and the one task I should do first. Keep tasks small enough to start today.`},
+  {cat:"Planning", title:"Plan my week", desc:"Turn a task list into a schedule.",
+   body:`Here are my tasks and commitments: [list].\nI have [hours available] and these priorities: [priorities].\nDraft a realistic weekly plan. Protect time for [deep work / priority]. Flag where I'm overcommitted.`},
+  {cat:"Planning", title:"Project plan skeleton", desc:"Structure a new project.",
+   body:`I'm starting [project]. Goal: [goal]. Constraints: [time/budget/people].\nGive me a plan: milestones, key tasks under each, risks, and what "done" looks like.\nKeep it lean — no busywork.`},
+  {cat:"Planning", title:"Decide what to drop", desc:"Prioritise under overload.",
+   body:`I have too much on: [list of commitments].\nMy real priorities are [priorities]. Help me decide what to keep, delegate, defer, or drop.\nBe direct. For each, say which bucket and why in one line.`},
+  {cat:"Planning", title:"Daily standup for myself", desc:"Quick focus ritual.",
+   body:`Based on these tasks [list] and this priority [priority], give me a 3-item focus list for today.\nOne must-do, one should-do, one if-time. Keep it ruthless. Ignore the rest.`},
+
+  // ---------- MARKETING & SOCIAL ----------
+  {cat:"Marketing", title:"Social post from an idea", desc:"One idea, platform-ready.",
+   body:`Write a [platform] post about [topic] for [audience].\nGoal: [educate / drive replies / get saves].\nHook in the first line. Sentence case, conversational, no hashtags unless asked. Keep it [length].`},
+  {cat:"Marketing", title:"Repurpose long to short", desc:"One asset, many posts.",
+   body:`Turn the content below into [5] short social posts for [platform].\nEach should stand alone, lead with a hook, and pull one idea from the source.\nMatch a [direct, practitioner] voice.\n\nContent:\n[paste text]`},
+  {cat:"Marketing", title:"Value proposition", desc:"Say what you do, clearly.",
+   body:`Write 5 versions of a value proposition for [product/service].\nWho it's for: [audience]. What it does: [outcome]. Why it's different: [angle].\nOne sentence each, plain language, no buzzwords.`},
+  {cat:"Marketing", title:"Landing page copy", desc:"Sections that convert.",
+   body:`Write landing page copy for [product] aimed at [audience].\nInclude: headline, subhead, 3 benefit blocks, objection-handling section, and a CTA.\nLead with the outcome, not features. Specific over clever.`},
+  {cat:"Marketing", title:"Audience research questions", desc:"Understand who you're selling to.",
+   body:`I sell [product] to [audience]. Help me understand them.\nList the questions I should answer about their goals, pains, objections, and the words they actually use.\nThen suggest where I could find those answers.`},
+  {cat:"Marketing", title:"Content calendar", desc:"A month of themes and posts.",
+   body:`Build a [4-week] content calendar for [platform] about [topic/niche] for [audience].\nGive a weekly theme and [3] post ideas per week (with hook lines).\nMix formats: teach, story, contrarian, behind-the-scenes.`},
+
+  // ---------- DECISION-MAKING ----------
+  {cat:"Decisions", title:"Decision framework", desc:"Structure a real choice.",
+   body:`I need to decide: [decision].\nWhat decision framework fits this best (e.g. weighted criteria, reversible vs not, expected value)? Apply it.\nWalk me through it with my specifics and end with the trade-offs — not a single verdict.`},
+  {cat:"Decisions", title:"Devil's advocate", desc:"Argue against your leaning.",
+   body:`I'm leaning toward [choice] because [reasons].\nArgue the strongest case against it. Where am I being biased, overconfident, or ignoring evidence?\nBe blunt. I want the holes, not reassurance.`},
+  {cat:"Decisions", title:"Reversible or not", desc:"Right-size the deliberation.",
+   body:`Decision: [decision].\nIs this reversible or one-way? How costly is it to undo? Given that, how much deliberation does it actually deserve?\nTell me if I'm overthinking a cheap decision or rushing an expensive one.`},
+  {cat:"Decisions", title:"Weighted scorecard", desc:"Score options against what matters.",
+   body:`Options: [list]. My criteria and their importance: [criteria with weights].\nBuild a weighted scorecard, score each option, and show the totals.\nThen note where the ranking is sensitive — a small change that would flip it.`},
+];
+
+// ---------- render ----------
+const grid = document.getElementById('grid');
+const catsEl = document.getElementById('cats');
+const searchEl = document.getElementById('search');
+const toast = document.getElementById('toast');
+
+const CATS = [...new Set(TEMPLATES.map(t => t.cat))];
+let activeCat = "All";
+let query = "";
+
+document.getElementById('totalCount').textContent = TEMPLATES.length;
+document.getElementById('catCount').textContent = CATS.length;
+
+function escapeHtml(s){return s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+function highlightPlaceholders(s){
+  return escapeHtml(s).replace(/\[([^\]]+)\]/g, '<span class="ph">[$1]</span>');
+}
+function getPlaceholders(body){
+  const seen = [];
+  const re = /\[([^\]]+)\]/g; let m;
+  while((m = re.exec(body))){ if(!seen.includes(m[1])) seen.push(m[1]); }
+  return seen;
+}
+
+function buildCats(){
+  const all = ["All", ...CATS];
+  catsEl.innerHTML = all.map(c=>{
+    const n = c==="All" ? TEMPLATES.length : TEMPLATES.filter(t=>t.cat===c).length;
+    return `<button class="cat ${c===activeCat?'on':''}" data-cat="${c}">${c} <span class="n">${n}</span></button>`;
+  }).join('');
+  catsEl.querySelectorAll('.cat').forEach(b=>{
+    b.addEventListener('click',()=>{activeCat=b.dataset.cat;buildCats();render();});
+  });
+}
+
+function matches(t){
+  if(activeCat!=="All" && t.cat!==activeCat) return false;
+  if(!query) return true;
+  const hay = (t.title+" "+t.desc+" "+t.body+" "+t.cat).toLowerCase();
+  return query.toLowerCase().split(/\s+/).every(w=>hay.includes(w));
+}
+
+function render(){
+  const list = TEMPLATES.filter(matches);
+  document.getElementById('shownCount').textContent = list.length;
+  if(list.length===0){
+    grid.innerHTML = `<div class="empty"><b>No templates match</b>Try a different keyword or reset the filters.</div>`;
+    return;
+  }
+  grid.innerHTML = list.map((t,i)=>{
+    const idx = TEMPLATES.indexOf(t);
+    const phs = getPlaceholders(t.body);
+    const fills = phs.map(p=>`
+      <div class="fillrow">
+        <label title="${escapeHtml(p)}">[${escapeHtml(p.length>14?p.slice(0,13)+'…':p)}]</label>
+        <input data-ph="${escapeHtml(p)}" placeholder="${escapeHtml(p)}">
+      </div>`).join('');
+    return `
+    <div class="card" data-idx="${idx}">
+      <div class="head">
+        <h3>${escapeHtml(t.title)}</h3>
+        <span class="tag">${escapeHtml(t.cat)}</span>
+      </div>
+      <div class="desc">${escapeHtml(t.desc)}</div>
+      <div class="body" data-body>${highlightPlaceholders(t.body)}</div>
+      <div class="fills">${fills}</div>
+      <div class="actions">
+        <button class="btn primary" data-copy>Copy</button>
+        ${phs.length?`<button class="btn ghost" data-fill>Fill in <span class="ph-count">· ${phs.length}</span></button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+
+  grid.querySelectorAll('.card').forEach(card=>{
+    const idx = +card.dataset.idx;
+    const tpl = TEMPLATES[idx];
+    const bodyEl = card.querySelector('[data-body]');
+    const fillsEl = card.querySelector('.fills');
+    const inputs = card.querySelectorAll('.fills input');
+
+    function assembled(){
+      let out = tpl.body;
+      inputs.forEach(inp=>{
+        const v = inp.value.trim();
+        if(v) out = out.split('['+inp.dataset.ph+']').join(v);
+      });
+      return out;
+    }
+    function refresh(){ bodyEl.innerHTML = highlightPlaceholders(assembled()); }
+
+    inputs.forEach(inp=>inp.addEventListener('input',refresh));
+
+    const fillBtn = card.querySelector('[data-fill]');
+    if(fillBtn){
+      fillBtn.addEventListener('click',()=>{
+        fillsEl.classList.toggle('open');
+        if(fillsEl.classList.contains('open')){ const f=fillsEl.querySelector('input'); if(f) f.focus(); }
+      });
+    }
+
+    card.querySelector('[data-copy]').addEventListener('click',async (e)=>{
+      const text = assembled();
+      try{ await navigator.clipboard.writeText(text); }
+      catch{ const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove(); }
+      const btn=e.currentTarget; const old=btn.textContent;
+      btn.textContent='Copied ✓'; btn.classList.add('copied');
+      showToast(inputs.length && [...inputs].some(i=>i.value.trim()) ? 'Copied filled prompt' : 'Copied template');
+      setTimeout(()=>{btn.textContent=old;btn.classList.remove('copied');},1300);
+    });
+  });
+}
+
+let toastT;
+function showToast(msg){
+  toast.textContent=msg; toast.classList.add('show');
+  clearTimeout(toastT); toastT=setTimeout(()=>toast.classList.remove('show'),1500);
+}
+
+searchEl.addEventListener('input',e=>{query=e.target.value;render();});
+document.getElementById('clearBtn').addEventListener('click',()=>{
+  query="";activeCat="All";searchEl.value="";buildCats();render();searchEl.focus();
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='/' && document.activeElement!==searchEl){e.preventDefault();searchEl.focus();}
+  if(e.key==='Escape' && document.activeElement===searchEl){searchEl.value="";query="";render();searchEl.blur();}
+});
+
+buildCats();
+render();
+</script>
+</body>
+</html>
